@@ -1,5 +1,6 @@
 import Header from "./components/Header";
 import Hero from "./components/Hero";
+import { Projects } from "./components/Projects";
 import Section from "./components/Section";
 
 function App() {
@@ -12,7 +13,7 @@ function App() {
 
       {/* Main content with padding to account for fixed header */}
       <main className="pt-16">
-        <Section id="projects" title="Projects" />
+        <Projects />
         <Section id="blog" title="Blog" />
         <Section id="about" title="About" />
         <Section id="contact" title="Contact" />
