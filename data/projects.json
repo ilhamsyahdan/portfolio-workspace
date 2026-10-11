@@ -1,0 +1,122 @@
+{
+  "projects": [
+    {
+      "id": "ecommerce-platform",
+      "title": "E-Commerce Platform",
+      "description": "A full-stack e-commerce platform with real-time inventory management, payment processing, and admin dashboard. Built with modern web technologies for optimal performance.",
+      "techStack": [
+        "React",
+        "TypeScript",
+        "Node.js",
+        "PostgreSQL",
+        "Stripe",
+        "Tailwind CSS"
+      ],
+      "imagePath": "/images/projects/ecommerce-platform.jpg",
+      "links": {
+        "demo": "https://demo.example.com",
+        "source": "https://github.com/username/ecommerce-platform"
+      },
+      "metadata": {
+        "date": "2026-08",
+        "featured": true,
+        "status": "completed",
+        "order": 1
+      }
+    },
+    {
+      "id": "task-management-app",
+      "title": "Task Management App",
+      "description": "Collaborative task management application with drag-and-drop kanban boards, team workspaces, and real-time updates using WebSockets.",
+      "techStack": [
+        "Vue.js",
+        "TypeScript",
+        "Express",
+        "MongoDB",
+        "Socket.io",
+        "Vuetify"
+      ],
+      "imagePath": "/images/projects/task-management.jpg",
+      "links": {
+        "demo": "https://tasks.example.com",
+        "source": "https://github.com/username/task-manager",
+        "caseStudy": "https://blog.example.com/building-task-manager"
+      },
+      "metadata": {
+        "date": "2026-05",
+        "featured": true,
+        "status": "completed",
+        "order": 2
+      }
+    },
+    {
+      "id": "weather-dashboard",
+      "title": "Weather Dashboard",
+      "description": "Interactive weather dashboard with location-based forecasts, historical data visualization, and severe weather alerts. Features responsive design and offline support.",
+      "techStack": [
+        "React",
+        "TypeScript",
+        "Chart.js",
+        "OpenWeather API",
+        "PWA"
+      ],
+      "imagePath": "/images/projects/weather-dashboard.jpg",
+      "links": {
+        "demo": "https://weather.example.com",
+        "source": "https://github.com/username/weather-dashboard"
+      },
+      "metadata": {
+        "date": "2026-03",
+        "featured": false,
+        "status": "completed",
+        "order": 3
+      }
+    },
+    {
+      "id": "blog-cms",
+      "title": "Headless Blog CMS",
+      "description": "A headless CMS for managing blog content with Markdown support, media library, and RESTful API. Includes role-based access control and content versioning.",
+      "techStack": [
+        "Next.js",
+        "TypeScript",
+        "Prisma",
+        "PostgreSQL",
+        "MDX",
+        "Tailwind CSS"
+      ],
+      "imagePath": "/images/projects/blog-cms.jpg",
+      "links": {
+        "source": "https://github.com/username/blog-cms"
+      },
+      "metadata": {
+        "date": "2026-01",
+        "featured": false,
+        "status": "completed",
+        "order": 4
+      }
+    },
+    {
+      "id": "ai-chat-assistant",
+      "title": "AI Chat Assistant",
+      "description": "Intelligent chat assistant powered by machine learning for customer support automation. Features context-aware responses and multi-language support.",
+      "techStack": [
+        "Python",
+        "FastAPI",
+        "TensorFlow",
+        "React",
+        "TypeScript",
+        "Redis"
+      ],
+      "imagePath": "/images/projects/ai-chat-assistant.jpg",
+      "links": {
+        "demo": "https://chat.example.com"
+      },
+      "metadata": {
+        "date": "2026-09",
+        "featured": true,
+        "status": "in-progress",
+        "order": 5
+      }
+    }
+  ]
+}
