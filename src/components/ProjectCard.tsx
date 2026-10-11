@@ -11,18 +11,17 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.05 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       viewport={{ once: true }}
-      className="group relative bg-slate-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-300"
+      className="group relative rounded-xl overflow-hidden border border-slate-700/50 bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 hover:border-blue-500/50 transition-all duration-300"
     >
       {/* Project Image */}
-      <div className="relative h-48 overflow-hidden bg-slate-900">
+      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-slate-900 to-slate-950">
         <img
           src={project.imagePath}
           alt={project.title}
           loading="lazy"
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          className="w-full h-full object-cover opacity-90"
         />
         {project.metadata?.featured && (
           <div className="absolute top-4 right-4 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full">
@@ -37,10 +36,8 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
       </div>
 
       {/* Project Content */}
-      <div className="p-6">
-        <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
-          {project.title}
-        </h3>
+      <div className="p-6 bg-gradient-to-b from-slate-800/80 to-slate-800">
+        <h3 className="text-xl font-bold text-white mb-2">{project.title}</h3>
         <p className="text-slate-400 mb-4 line-clamp-3">
           {project.description}
         </p>
@@ -50,7 +47,7 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
           {project.techStack.map((tech) => (
             <span
               key={tech}
-              className="text-xs bg-slate-700 text-slate-300 px-3 py-1 rounded-full hover:bg-blue-500 hover:text-white transition-colors cursor-default"
+              className="text-xs bg-slate-700/70 text-slate-300 px-2.5 py-1 rounded-md border border-slate-600/50"
             >
               {tech}
             </span>
