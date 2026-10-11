@@ -4,15 +4,22 @@ import type { Project } from "../types/project";
 interface ProjectCardProps {
   project: Project;
   index: number;
+  selectedTech?: string | null;
+  onTechClick?: (tech: string) => void;
 }
 
-export const ProjectCard = ({ project, index }: ProjectCardProps) => {
+export const ProjectCard = ({
+  project,
+  selectedTech,
+  onTechClick,
+}: ProjectCardProps) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      viewport={{ once: true }}
+      layout
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ duration: 0.3 }}
       className="group relative rounded-xl overflow-hidden border border-slate-700/50 bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 hover:border-blue-500/50 transition-all duration-300"
     >
       {/* Project Image */}
@@ -45,12 +52,18 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
         {/* Tech Stack Badges */}
         <div className="flex flex-wrap gap-2 mb-4">
           {project.techStack.map((tech) => (
-            <span
+            <button
               key={tech}
-              className="text-xs bg-slate-700/70 text-slate-300 px-2.5 py-1 rounded-md border border-slate-600/50"
+              onClick={() => onTechClick?.(tech)}
+              className={`text-xs px-2.5 py-1 rounded-md border transition-all duration-200 ${
+                selectedTech === tech
+                  ? "bg-blue-500 text-white border-blue-400 shadow-md"
+                  : "bg-slate-700/70 text-slate-300 border-slate-600/50 hover:bg-slate-600 hover:border-slate-500 cursor-pointer"
+              }`}
+              aria-label={`Filter by ${tech}`}
             >
               {tech}
-            </span>
+            </button>
           ))}
         </div>
 
