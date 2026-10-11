@@ -1,14 +1,43 @@
+import { useState } from "react";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import { Projects } from "./components/Projects";
 import { BlogList } from "./components/BlogList";
+import { BlogPost } from "./components/BlogPost";
 import Section from "./components/Section";
 
+type View = "home" | "blog-post";
+
 function App() {
+  const [view, setView] = useState<View>("home");
+  const [selectedSlug, setSelectedSlug] = useState<string>("");
+
   const handleBlogPostSelect = (slug: string) => {
-    // For now, just log - full post viewer will be implemented in ticket 09
-    console.log("Selected blog post:", slug);
+    setSelectedSlug(slug);
+    setView("blog-post");
+    // Scroll to top when viewing a blog post
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  const handleBackToBlog = () => {
+    setView("home");
+    // Scroll to blog section
+    const blogSection = document.getElementById("blog");
+    if (blogSection) {
+      blogSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  if (view === "blog-post" && selectedSlug) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="pt-16">
+          <BlogPost slug={selectedSlug} onBack={handleBackToBlog} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
