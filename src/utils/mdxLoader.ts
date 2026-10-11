@@ -1,37 +1,39 @@
-import matter from "gray-matter";
-import { BlogFrontmatter, BlogPostMetadata } from "../types/blog";
+import { BlogFrontmatter, BlogPostMetadata, BlogPost } from "../types/blog";
+
+// Glob pattern for MDX files - used by both loader functions
+const MDX_GLOB_PATTERN = "/content/blog/*.mdx";
 
 /**
  * Loads all MDX blog posts from the content/blog directory
  * Returns metadata for all posts (slug + frontmatter)
+ * Uses Vite's build-time MDX compilation
  */
 export async function loadBlogPosts(): Promise<BlogPostMetadata[]> {
   try {
-    // Use Vite's glob import to load all MDX files
-    const modules = import.meta.glob("/content/blog/*.mdx", {
-      query: "?raw",
-      import: "default",
-    });
+    // Use Vite's glob import to load all MDX files as modules (not raw)
+    const modules = import.meta.glob<{ frontmatter: BlogFrontmatter }>(
+      MDX_GLOB_PATTERN,
+      { eager: false },
+    );
 
     const posts: BlogPostMetadata[] = [];
 
     for (const path in modules) {
       try {
-        const content = (await modules[path]()) as string;
-        const { data } = matter(content);
+        const module = await modules[path]();
 
         // Extract slug from file path
         const slug = path.replace("/content/blog/", "").replace(".mdx", "");
 
         // Validate frontmatter structure
-        if (!isValidFrontmatter(data)) {
-          console.error(`Invalid frontmatter in ${path}`, data);
+        if (!module.frontmatter || !isValidFrontmatter(module.frontmatter)) {
+          console.error(`Invalid frontmatter in ${path}`, module.frontmatter);
           continue;
         }
 
         posts.push({
           slug,
-          frontmatter: data as BlogFrontmatter,
+          frontmatter: module.frontmatter,
         });
       } catch (error) {
         console.error(`Error loading blog post from ${path}:`, error);
@@ -52,34 +54,33 @@ export async function loadBlogPosts(): Promise<BlogPostMetadata[]> {
 
 /**
  * Loads a single blog post by slug
+ * Returns the frontmatter and the MDX content as a React component
  */
-export async function loadBlogPost(
-  slug: string,
-): Promise<{ frontmatter: BlogFrontmatter; content: string } | null> {
+export async function loadBlogPost(slug: string): Promise<BlogPost | null> {
   try {
     const path = `/content/blog/${slug}.mdx`;
-    const module = import.meta.glob("/content/blog/*.mdx", {
-      query: "?raw",
-      import: "default",
-    });
+    const modules = import.meta.glob<{
+      default: React.ComponentType;
+      frontmatter: BlogFrontmatter;
+    }>(MDX_GLOB_PATTERN);
 
-    const loader = module[path];
+    const loader = modules[path];
     if (!loader) {
       console.error(`Blog post not found: ${slug}`);
       return null;
     }
 
-    const content = (await loader()) as string;
-    const { data, content: mdxContent } = matter(content);
+    const module = await loader();
 
-    if (!isValidFrontmatter(data)) {
-      console.error(`Invalid frontmatter in ${slug}`, data);
+    if (!module.frontmatter || !isValidFrontmatter(module.frontmatter)) {
+      console.error(`Invalid frontmatter in ${slug}`, module.frontmatter);
       return null;
     }
 
     return {
-      frontmatter: data as BlogFrontmatter,
-      content: mdxContent,
+      slug,
+      frontmatter: module.frontmatter,
+      content: module.default,
     };
   } catch (error) {
     console.error(`Error loading blog post ${slug}:`, error);
