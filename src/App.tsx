@@ -1,10 +1,14 @@
 import Header from "./components/Header";
+import Hero from "./components/Hero";
 import Section from "./components/Section";
 
 function App() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+
+      {/* Hero Section */}
+      <Hero />
 
       {/* Main content with padding to account for fixed header */}
       <main className="pt-16">
