@@ -1,8 +1,5 @@
 import { BlogFrontmatter, BlogPostMetadata, BlogPost } from "../types/blog";
 
-// Glob pattern for MDX files - used by both loader functions
-const MDX_GLOB_PATTERN = "/content/blog/*.mdx";
-
 /**
  * Loads all MDX blog posts from the content/blog directory
  * Returns metadata for all posts (slug + frontmatter)
@@ -11,8 +8,9 @@ const MDX_GLOB_PATTERN = "/content/blog/*.mdx";
 export async function loadBlogPosts(): Promise<BlogPostMetadata[]> {
   try {
     // Use Vite's glob import to load all MDX files as modules (not raw)
+    // Note: Vite requires the glob pattern to be a string literal
     const modules = import.meta.glob<{ frontmatter: BlogFrontmatter }>(
-      MDX_GLOB_PATTERN,
+      "/content/blog/*.mdx",
       { eager: false },
     );
 
@@ -62,7 +60,7 @@ export async function loadBlogPost(slug: string): Promise<BlogPost | null> {
     const modules = import.meta.glob<{
       default: React.ComponentType;
       frontmatter: BlogFrontmatter;
-    }>(MDX_GLOB_PATTERN);
+    }>("/content/blog/*.mdx");
 
     const loader = modules[path];
     if (!loader) {
