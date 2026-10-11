@@ -1,0 +1,19 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#1e293b"/>
+  <rect x="50" y="50" width="700" height="500" fill="#334155" rx="8"/>
+  
+  <!-- Shopping cart icon -->
+  <circle cx="400" cy="250" r="80" fill="#3b82f6" opacity="0.2"/>
+  <path d="M 360 220 L 440 220 L 450 280 L 350 280 Z" fill="#3b82f6" stroke="#60a5fa" stroke-width="3"/>
+  <circle cx="370" cy="290" r="8" fill="#60a5fa"/>
+  <circle cx="430" cy="290" r="8" fill="#60a5fa"/>
+  <line x1="340" y1="220" x2="360" y2="220" stroke="#60a5fa" stroke-width="3"/>
+  
+  <!-- Title -->
+  <text x="400" y="360" font-family="Arial, sans-serif" font-size="32" fill="#f1f5f9" text-anchor="middle" font-weight="bold">E-Commerce Platform</text>
+  <text x="400" y="400" font-family="Arial, sans-serif" font-size="18" fill="#94a3b8" text-anchor="middle">React • TypeScript • Node.js • PostgreSQL</text>
+  
+  <!-- Decorative elements -->
+  <circle cx="150" cy="150" r="20" fill="#3b82f6" opacity="0.3"/>
+  <circle cx="650" cy="450" r="30" fill="#3b82f6" opacity="0.3"/>
+</svg>

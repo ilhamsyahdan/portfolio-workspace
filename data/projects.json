@@ -12,7 +12,7 @@
         "Stripe",
         "Tailwind CSS"
       ],
-      "imagePath": "/images/projects/ecommerce-platform.jpg",
+      "imagePath": "/images/projects/ecommerce-platform.svg",
       "links": {
         "demo": "https://demo.example.com",
         "source": "https://github.com/username/ecommerce-platform"
@@ -36,7 +36,7 @@
         "Socket.io",
         "Vuetify"
       ],
-      "imagePath": "/images/projects/task-management.jpg",
+      "imagePath": "/images/projects/task-management.svg",
       "links": {
         "demo": "https://tasks.example.com",
         "source": "https://github.com/username/task-manager",
@@ -60,7 +60,7 @@
         "OpenWeather API",
         "PWA"
       ],
-      "imagePath": "/images/projects/weather-dashboard.jpg",
+      "imagePath": "/images/projects/weather-dashboard.svg",
       "links": {
         "demo": "https://weather.example.com",
         "source": "https://github.com/username/weather-dashboard"
@@ -84,7 +84,7 @@
         "MDX",
         "Tailwind CSS"
       ],
-      "imagePath": "/images/projects/blog-cms.jpg",
+      "imagePath": "/images/projects/blog-cms.svg",
       "links": {
         "source": "https://github.com/username/blog-cms"
       },
@@ -107,7 +107,7 @@
         "TypeScript",
         "Redis"
       ],
-      "imagePath": "/images/projects/ai-chat-assistant.jpg",
+      "imagePath": "/images/projects/ai-chat-assistant.svg",
       "links": {
         "demo": "https://chat.example.com"
       },

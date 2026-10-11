@@ -1,0 +1,33 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#14532d"/>
+  <rect x="50" y="50" width="700" height="500" fill="#166534" rx="8"/>
+  
+  <!-- AI/Chat representation -->
+  <circle cx="400" cy="250" r="80" fill="#10b981" opacity="0.3"/>
+  
+  <!-- Chat bubbles -->
+  <rect x="250" y="200" width="120" height="60" fill="#22c55e" rx="8"/>
+  <polygon points="250,240 240,250 250,260" fill="#22c55e"/>
+  
+  <rect x="430" y="260" width="120" height="60" fill="#34d399" rx="8"/>
+  <polygon points="550,280 560,290 550,300" fill="#34d399"/>
+  
+  <!-- AI brain/circuit -->
+  <circle cx="400" cy="200" r="12" fill="#86efac"/>
+  <circle cx="420" cy="220" r="8" fill="#86efac"/>
+  <circle cx="380" cy="220" r="8" fill="#86efac"/>
+  <line x1="400" y1="200" x2="420" y2="220" stroke="#86efac" stroke-width="2"/>
+  <line x1="400" y1="200" x2="380" y2="220" stroke="#86efac" stroke-width="2"/>
+  
+  <!-- Title -->
+  <text x="400" y="380" font-family="Arial, sans-serif" font-size="32" fill="#f1f5f9" text-anchor="middle" font-weight="bold">AI Chat Assistant</text>
+  <text x="400" y="420" font-family="Arial, sans-serif" font-size="18" fill="#d1fae5" text-anchor="middle">Python • FastAPI • TensorFlow • React</text>
+  
+  <!-- Status badge -->
+  <rect x="340" y="440" width="120" height="30" fill="#10b981" rx="15"/>
+  <text x="400" y="462" font-family="Arial, sans-serif" font-size="14" fill="#f1f5f9" text-anchor="middle" font-weight="bold">IN PROGRESS</text>
+  
+  <!-- Decorative elements -->
+  <circle cx="120" cy="480" r="20" fill="#10b981" opacity="0.3"/>
+  <circle cx="680" cy="120" r="25" fill="#10b981" opacity="0.3"/>
+</svg>
