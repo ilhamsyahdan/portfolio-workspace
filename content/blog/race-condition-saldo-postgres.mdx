@@ -1,0 +1,78 @@
+---
+title: "Your Balance Check Passes, but Your Balance Is Still Wrong: A Race Condition in Postgres"
+date: "2026-10-18"
+description: "How 100 parallel transfers exposed a stale-read bug in a mini e-wallet, and how SELECT ... FOR UPDATE fixed it."
+tags: ["PostgreSQL", "Concurrency", "Backend"]
+author: "Portfolio Author"
+---
+
+# Your Balance Check Passes, but Your Balance Is Still Wrong: A Race Condition in Postgres
+
+This post is about a bug I found in a mini e-wallet that I built to learn data consistency. It is a learning project, **not** a real payment system.
+
+## The problem
+
+Here is a transfer function that looks correct:
+
+1. Read the sender's balance.
+2. If the balance is enough, continue.
+3. Insert the ledger entries and update both balances.
+
+With one request at a time, it works. With two requests at the same time, it does not. Say the balance is 1000 and two transfers of 800 arrive together. Both read 1000, both pass the check, and both try to subtract 800.
+
+## Reproducing it
+
+I wrote a test that sends 100 transfers of 100 in parallel from an account with a balance of 1000. The correct result is exactly 10 successes and 90 rejections, and the sender ends at 0.
+
+```ts
+const results = await Promise.allSettled(
+  Array.from({ length: 100 }, () =>
+    transfer(sender.accountId, receiver.accountId, 100, randomUUID(), sender.userId),
+  ),
+);
+```
+
+## Evidence: before the fix
+
+I removed `FOR UPDATE` from the query and ran the test. It failed:
+
+```bash
+Expected: "Saldo tidak cukup"
+Received: "new row for relation "accounts" violates check constraint "accounts_balance_non_negative""
+```
+
+("Saldo tidak cukup" means "insufficient balance".)
+
+Some transfers read a stale balance, passed the application check, and were only stopped later by a `CHECK (balance >= 0)` constraint in the database. To be honest about the result: the money stayed safe, but only because of that last line of defense. The application-level check was working on stale data.
+
+## The fix
+
+Lock the rows before reading the balance:
+
+```sql
+SELECT id, balance, type
+FROM accounts
+WHERE id IN ($1, $2)
+ORDER BY id
+FOR UPDATE
+```
+
+- `FOR UPDATE` makes other transactions that touch the same rows wait until this transaction commits or rolls back. They then read the latest balance.
+- Transfers on different accounts do not block each other.
+- `ORDER BY id` makes every transaction lock rows in the same order. If one transaction locked A then B while another locked B then A, they could wait on each other forever. That is a deadlock.
+
+## Evidence: after the fix
+
+With `FOR UPDATE` restored, the same test passes. Exactly 10 transfers succeed and 90 are rejected with "Saldo tidak cukup". The sender ends at 0, the receiver at 1000, and the sum of the ledger entries matches each account's `balance`.
+
+## Takeaways
+
+- A check-then-write sequence is only safe if the read is protected.
+- A database constraint is a good last line of defense, not a replacement for correct locking.
+- A test is only trustworthy if you have seen it fail. I turned the safety off on purpose to prove the test could catch the bug.
+
+## Limits
+
+This is a learning project. I have not tested it with multiple application servers, and the test runs only on my local machine and in CI against a single Postgres instance.
+
+Code: TODO (add your mini-wallet repo link here)

@@ -1,180 +1,250 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
-const navigation = [
+interface NavItem {
+  readonly name: string;
+  readonly href: `#${string}`;
+}
+
+interface HeaderProps {
+  /**
+   * Called when a nav link points to a section that isn't on the current
+   * page (e.g. while reading a blog post). Lets the parent switch views.
+   */
+  onMissingSection?: (sectionId: string) => void;
+  sectionsReady?: boolean;
+}
+
+const NAV_ITEMS: readonly NavItem[] = [
+  { name: "About", href: "#about" },
   { name: "Projects", href: "#projects" },
   { name: "Blog", href: "#blog" },
-  { name: "About", href: "#about" },
   { name: "Contact", href: "#contact" },
 ];
 
-export default function Header() {
-  const [activeSection, setActiveSection] = useState("");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+/** Every section id the scroll-spy observes (hero resets the active state). */
+const OBSERVED_IDS: readonly string[] = [
+  "hero",
+  ...NAV_ITEMS.map((item) => item.href.slice(1)),
+];
 
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950";
+
+function Header({ onMissingSection, sectionsReady }: HeaderProps) {
+  const reduceMotion = useReducedMotion();
+  const [activeSection, setActiveSection] = useState<string>("");
+  const [mobileOpen, setMobileOpen] = useState<boolean>(false);
+  const [scrolled, setScrolled] = useState<boolean>(false);
+  const rootRef = useRef<HTMLElement>(null);
+
+  // Scroll-spy: the section crossing the middle of the viewport is "active".
   useEffect(() => {
-    // Intersection Observer to track active section
-    const observerOptions = {
-      root: null,
-      rootMargin: "-50% 0px -50% 0px",
-      threshold: 0,
-    };
-
-    const observerCallback = (entries: IntersectionObserverEntry[]) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          setActiveSection(entry.target.id);
-        }
-      });
-    };
-
     const observer = new IntersectionObserver(
-      observerCallback,
-      observerOptions,
+      (entries: IntersectionObserverEntry[]) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id === "hero" ? "" : entry.target.id);
+          }
+        });
+      },
+      { root: null, rootMargin: "-50% 0px -50% 0px", threshold: 0 },
     );
 
-    // Observe all sections
-    navigation.forEach(({ href }) => {
-      const sectionId = href.replace("#", "");
-      const section = document.getElementById(sectionId);
-      if (section) {
-        observer.observe(section);
-      }
+    OBSERVED_IDS.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
     });
 
     return () => observer.disconnect();
+  }, [sectionsReady]);
+
+  // Slightly denser glass once the page is scrolled.
+  useEffect(() => {
+    const onScroll = (): void => setScrolled(window.scrollY > 16);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleNavClick = (
-    e: React.MouseEvent<HTMLAnchorElement>,
-    href: string,
-  ) => {
-    e.preventDefault();
-    const sectionId = href.replace("#", "");
-    const section = document.getElementById(sectionId);
+  // Close the mobile menu on Escape or when clicking outside.
+  useEffect(() => {
+    if (!mobileOpen) return;
 
-    if (section) {
-      section.scrollIntoView({ behavior: "smooth", block: "start" });
-      setMobileMenuOpen(false);
-      // Update URL without triggering page reload
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    const onPointerDown = (e: PointerEvent): void => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setMobileOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [mobileOpen]);
+
+  const handleNavClick = useCallback(
+    (e: ReactMouseEvent<HTMLAnchorElement>, href: string): void => {
+      e.preventDefault();
+      const sectionId = href.replace("#", "");
+      const section = document.getElementById(sectionId);
+      if (!section) {
+        onMissingSection?.(sectionId);
+        setMobileOpen(false);
+        return;
+      }
+
+      section.scrollIntoView({
+        behavior: reduceMotion ? "auto" : "smooth",
+        block: "start",
+      });
+      setMobileOpen(false);
       window.history.pushState(null, "", href);
-    }
-  };
+    },
+    [reduceMotion, onMissingSection],
+  );
+
+  const indicatorTransition = reduceMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 380, damping: 32 };
+
+  // Mobile pill shows where you are, falling back to "Menu".
+  const activeLabel =
+    NAV_ITEMS.find((item) => item.href.slice(1) === activeSection)?.name ??
+    "Menu";
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-gray-800">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo / Initials */}
-          <div className="flex-shrink-0">
-            <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                window.scrollTo({ top: 0, behavior: "smooth" });
-                setMobileMenuOpen(false);
-              }}
-              className="text-accent text-2xl font-bold hover:opacity-80 transition-opacity"
-            >
-              AP
-            </a>
-          </div>
+    <header
+      ref={rootRef}
+      className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4 sm:pt-5"
+    >
+      <div className="pointer-events-auto relative w-full max-w-md md:w-auto md:max-w-none">
+        <nav
+          aria-label="Main navigation"
+          className={`flex w-full items-center justify-between rounded-full border border-white/10 py-1.5 pl-5 pr-1.5 backdrop-blur-xl transition-[background-color,box-shadow] duration-300 md:w-auto md:justify-center md:p-1.5 ${
+            scrolled
+              ? "bg-slate-950/70 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.06)]"
+              : "bg-white/[0.04] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]"
+          }`}
+        >
+          {/* Mobile: current section label */}
+          <span className="flex items-center gap-2.5 text-sm font-medium text-slate-200 md:hidden">
+            <span
+              aria-hidden
+              className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.8)]"
+            />
+            {activeLabel}
+          </span>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex md:space-x-8">
-            {navigation.map((item) => {
-              const sectionId = item.href.replace("#", "");
-              const isActive = activeSection === sectionId;
-
+          {/* Desktop links (centered) */}
+          <ul className="hidden items-center gap-1 md:flex">
+            {NAV_ITEMS.map((item) => {
+              const isActive = activeSection === item.href.slice(1);
               return (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  onClick={(e) => handleNavClick(e, item.href)}
-                  className={`px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive
-                      ? "text-accent"
-                      : "text-text-secondary hover:text-text-primary"
-                  }`}
-                >
-                  {item.name}
-                </a>
-              );
-            })}
-          </div>
-
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-text-secondary hover:text-text-primary hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent"
-              aria-expanded={mobileMenuOpen}
-              aria-label="Toggle navigation menu"
-            >
-              <span className="sr-only">Open main menu</span>
-              {/* Hamburger Icon */}
-              {!mobileMenuOpen ? (
-                <svg
-                  className="block h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  className="block h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Menu Panel */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-800">
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              {navigation.map((item) => {
-                const sectionId = item.href.replace("#", "");
-                const isActive = activeSection === sectionId;
-
-                return (
+                <li key={item.name}>
                   <a
-                    key={item.name}
                     href={item.href}
                     onClick={(e) => handleNavClick(e, item.href)}
-                    className={`block px-3 py-2 rounded-md text-base font-medium ${
+                    aria-current={isActive ? "location" : undefined}
+                    className={`relative block rounded-full px-5 py-2.5 text-sm font-medium transition-colors duration-200 ${focusRing} ${
                       isActive
-                        ? "text-accent bg-gray-900"
-                        : "text-text-secondary hover:text-text-primary hover:bg-gray-800"
+                        ? "text-white"
+                        : "text-slate-400 hover:text-slate-100"
                     }`}
                   >
-                    {item.name}
+                    {isActive && (
+                      <motion.span
+                        layoutId="navbar-active-pill"
+                        transition={indicatorTransition}
+                        className="absolute inset-0 rounded-full border border-white/10 bg-white/10"
+                      />
+                    )}
+                    <span className="relative">{item.name}</span>
                   </a>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </nav>
+                </li>
+              );
+            })}
+          </ul>
+
+          {/* Mobile toggle */}
+          <button
+            type="button"
+            onClick={() => setMobileOpen((open) => !open)}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-menu"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            className={`relative grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition-colors hover:bg-white/10 md:hidden ${focusRing}`}
+          >
+            <span aria-hidden className="relative block h-3.5 w-4">
+              <span
+                className={`absolute left-0 h-0.5 w-4 rounded-full bg-current transition-all duration-300 ${
+                  mobileOpen ? "top-1.5 rotate-45" : "top-0"
+                }`}
+              />
+              <span
+                className={`absolute left-0 top-1.5 h-0.5 w-4 rounded-full bg-current transition-opacity duration-200 ${
+                  mobileOpen ? "opacity-0" : "opacity-100"
+                }`}
+              />
+              <span
+                className={`absolute left-0 h-0.5 w-4 rounded-full bg-current transition-all duration-300 ${
+                  mobileOpen ? "top-1.5 -rotate-45" : "top-3"
+                }`}
+              />
+            </span>
+          </button>
+        </nav>
+
+        {/* Mobile panel */}
+        <AnimatePresence>
+          {mobileOpen && (
+            <motion.div
+              id="mobile-menu"
+              initial={
+                reduceMotion ? false : { opacity: 0, y: -8, scale: 0.98 }
+              }
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={
+                reduceMotion
+                  ? { opacity: 0 }
+                  : { opacity: 0, y: -8, scale: 0.98 }
+              }
+              transition={{ duration: reduceMotion ? 0 : 0.2, ease: "easeOut" }}
+              className="absolute inset-x-0 top-full mt-2 origin-top rounded-3xl border border-white/10 bg-slate-950/80 p-2 backdrop-blur-xl shadow-[0_16px_48px_-12px_rgba(0,0,0,0.7)] md:hidden"
+            >
+              <ul className="flex flex-col gap-1">
+                {NAV_ITEMS.map((item) => {
+                  const isActive = activeSection === item.href.slice(1);
+                  return (
+                    <li key={item.name}>
+                      <a
+                        href={item.href}
+                        onClick={(e) => handleNavClick(e, item.href)}
+                        aria-current={isActive ? "location" : undefined}
+                        className={`block rounded-2xl px-4 py-3 text-base font-medium transition-colors ${focusRing} ${
+                          isActive
+                            ? "bg-white/10 text-cyan-300"
+                            : "text-slate-300 hover:bg-white/5 hover:text-white"
+                        }`}
+                      >
+                        {item.name}
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </header>
   );
 }
+
+export default Header;

@@ -1,70 +1,70 @@
-import { useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { LazyMotion, domAnimation } from "framer-motion";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
-import { Projects } from "./components/Projects";
-import { BlogList } from "./components/BlogList";
-import { BlogPost } from "./components/BlogPost";
-import Section from "./components/Section";
+
+const BelowFold = lazy(() => import("./components/BelowFold"));
+const BlogPost = lazy(() =>
+  import("./components/BlogPost").then((mod) => ({ default: mod.BlogPost })),
+);
 
 type View = "home" | "blog-post";
 
 function App() {
   const [view, setView] = useState<View>("home");
   const [selectedSlug, setSelectedSlug] = useState<string>("");
+  const [pendingSection, setPendingSection] = useState<string | null>(null);
+  const [sectionsReady, setSectionsReady] = useState<boolean>(false);
 
-  const handleBlogPostSelect = (slug: string) => {
+  const handleBlogPostSelect = (slug: string): void => {
     setSelectedSlug(slug);
     setView("blog-post");
-    // Scroll to top when viewing a blog post
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0 });
   };
 
-  const handleBackToBlog = () => {
+  const goToSection = (sectionId: string): void => {
     setView("home");
-    // Scroll to blog section
-    const blogSection = document.getElementById("blog");
-    if (blogSection) {
-      blogSection.scrollIntoView({ behavior: "smooth" });
-    }
+    setPendingSection(sectionId);
   };
 
-  if (view === "blog-post" && selectedSlug) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="pt-16">
-          <BlogPost slug={selectedSlug} onBack={handleBackToBlog} />
-        </div>
-      </div>
-    );
-  }
+  const handleReady = useCallback((): void => setSectionsReady(true), []);
+
+  useEffect(() => {
+    if (view !== "home" || !pendingSection) return;
+    document
+      .getElementById(pendingSection)
+      ?.scrollIntoView({ behavior: "auto", block: "start" });
+    setPendingSection(null);
+  }, [view, pendingSection]);
+
+  const showPost = view === "blog-post" && selectedSlug;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <LazyMotion features={domAnimation} strict>
+      <div className="min-h-screen bg-slate-950">
+        <Header
+          key={view}
+          sectionsReady={sectionsReady}
+          onMissingSection={goToSection}
+        />
 
-      {/* Hero Section */}
-      <Hero />
-
-      {/* Main content with padding to account for fixed header */}
-      <main className="pt-16">
-        <Projects />
-
-        {/* Blog Section */}
-        <section
-          id="blog"
-          className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-20"
-        >
-          <div className="max-w-7xl w-full">
-            <h2 className="text-4xl font-bold text-text-primary mb-8">Blog</h2>
-            <BlogList onPostSelect={handleBlogPostSelect} />
-          </div>
-        </section>
-
-        <Section id="about" title="About" />
-        <Section id="contact" title="Contact" />
-      </main>
-    </div>
+        {showPost ? (
+          <Suspense fallback={<div className="min-h-screen" />}>
+            <BlogPost slug={selectedSlug} onBack={() => goToSection("blog")} />
+          </Suspense>
+        ) : (
+          <main>
+            <Hero />
+            <Suspense fallback={<div className="min-h-screen" />}>
+              <BelowFold
+                onPostSelect={handleBlogPostSelect}
+                onReady={handleReady}
+              />
+            </Suspense>
+          </main>
+        )}
+      </div>
+    </LazyMotion>
   );
 }
 

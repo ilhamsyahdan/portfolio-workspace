@@ -1,13 +1,44 @@
-import { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useMemo, useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { getAllProjects } from "../data/projects";
 import { ProjectCard } from "./ProjectCard";
+import { SectionHeader } from "./SectionHeader";
+
+const GITHUB_URL = "https://github.com/username";
+
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950";
+
+interface FilterChipProps {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  ariaLabel: string;
+}
+
+function FilterChip({ label, active, onClick, ariaLabel }: FilterChipProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      aria-pressed={active}
+      className={`rounded-full border px-4 py-2 text-sm backdrop-blur-md transition-all duration-200 ${focusRing} ${
+        active
+          ? "border-cyan-400/60 bg-cyan-500 font-semibold text-slate-950 shadow-[0_0_24px_-6px_rgba(6,182,212,0.8)]"
+          : "border-white/10 bg-white/[0.04] text-slate-300 hover:border-white/20 hover:bg-white/10"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
 
 export const Projects = () => {
-  const allProjects = getAllProjects();
+  const allProjects = useMemo(() => getAllProjects(), []);
   const [selectedTech, setSelectedTech] = useState<string | null>(null);
 
-  // Extract all unique tech stacks from projects
+  // Unique tech stacks across all projects
   const allTechStacks = useMemo(() => {
     const techSet = new Set<string>();
     allProjects.forEach((project) => {
@@ -16,7 +47,6 @@ export const Projects = () => {
     return Array.from(techSet).sort();
   }, [allProjects]);
 
-  // Filter projects based on selected tech
   const filteredProjects = useMemo(() => {
     if (!selectedTech) return allProjects;
     return allProjects.filter((project) =>
@@ -24,103 +54,84 @@ export const Projects = () => {
     );
   }, [allProjects, selectedTech]);
 
-  // Handle tech badge click - toggle filter
-  const handleTechClick = (tech: string) => {
+  // Clicking the active tech again clears the filter
+  const handleTechClick = (tech: string): void => {
     setSelectedTech((current) => (current === tech ? null : tech));
   };
 
   return (
-    <section id="projects" className="min-h-screen py-20 bg-slate-900">
-      <div className="max-w-7xl mx-auto px-6">
-        {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
-        >
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Featured <span className="text-blue-500">Projects</span>
-          </h2>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-            A collection of projects I've built, showcasing various technologies
-            and problem-solving approaches
-          </p>
-        </motion.div>
+    <section
+      id="projects"
+      className="relative isolate scroll-mt-24 overflow-hidden bg-slate-950 px-4 py-24 sm:px-6 sm:py-32 lg:px-8"
+    >
+      {/* Ambient glow + top divider */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="absolute -left-40 top-1/4 h-[28rem] w-[28rem] rounded-full bg-cyan-500/10 blur-[130px]" />
+      </div>
 
-        {/* Tech Stack Filter */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
-          className="mb-8"
-        >
-          <div className="flex flex-wrap justify-center gap-2 mb-4">
+      <div className="mx-auto max-w-7xl">
+        {/* Header */}
+        <SectionHeader
+          badge="Selected work"
+          title="Featured projects"
+          description="A selection of things I've built, from product dashboards to developer tools. Filter by technology to see what I use where."
+          action={
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`inline-flex w-fit items-center rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-slate-100 backdrop-blur-md transition-colors hover:border-white/20 hover:bg-white/10 ${focusRing}`}
+            >
+              View all on GitHub
+            </a>
+          }
+        />
+
+        {/* Tech filter */}
+        <div className="mt-12">
+          <div
+            role="group"
+            aria-label="Filter projects by technology"
+            className="flex flex-wrap gap-2"
+          >
+            <FilterChip
+              label="All"
+              active={selectedTech === null}
+              onClick={() => setSelectedTech(null)}
+              ariaLabel="Show all projects"
+            />
             {allTechStacks.map((tech) => (
-              <button
+              <FilterChip
                 key={tech}
+                label={tech}
+                active={selectedTech === tech}
                 onClick={() => handleTechClick(tech)}
-                className={`text-sm px-4 py-2 rounded-lg border transition-all duration-300 ${
-                  selectedTech === tech
-                    ? "bg-blue-500 text-white border-blue-400 shadow-lg shadow-blue-500/30"
-                    : "bg-slate-800/50 text-slate-300 border-slate-700/50 hover:bg-slate-700 hover:border-slate-600"
-                }`}
-                aria-label={`Filter by ${tech}`}
-                aria-pressed={selectedTech === tech}
-              >
-                {tech}
-              </button>
+                ariaLabel={`Filter by ${tech}`}
+              />
             ))}
           </div>
 
-          {/* Filtered Count Display */}
-          <motion.p
-            key={selectedTech || "all"}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="text-center text-slate-400 text-sm"
-          >
+          <p aria-live="polite" className="mt-4 text-sm text-slate-400">
             {selectedTech
               ? `Showing ${filteredProjects.length} of ${allProjects.length} projects`
-              : `Showing all ${allProjects.length} projects`}
-          </motion.p>
-        </motion.div>
+              : `${allProjects.length} projects`}
+          </p>
+        </div>
 
-        {/* Projects Grid - Responsive: 1 col mobile → 2 cols tablet → 3 cols desktop */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Grid: 1 col mobile → 2 tablet → 3 desktop */}
+        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence mode="popLayout">
-            {filteredProjects.map((project, index) => (
+            {filteredProjects.map((project) => (
               <ProjectCard
                 key={project.id}
                 project={project}
-                index={index}
                 selectedTech={selectedTech}
                 onTechClick={handleTechClick}
               />
             ))}
           </AnimatePresence>
         </div>
-
-        {/* View All Button */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          viewport={{ once: true }}
-          className="text-center mt-12"
-        >
-          <a
-            href="https://github.com/username"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block bg-slate-800 hover:bg-blue-500 text-white font-semibold px-8 py-3 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/50"
-          >
-            View All Projects on GitHub
-          </a>
-        </motion.div>
       </div>
     </section>
   );
