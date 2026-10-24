@@ -8,6 +8,7 @@ import type {
   Certification,
   ProfilePhotoData,
 } from "../data/about";
+import { TechStack } from "./TechStack";
 
 interface AboutProps {
   content?: AboutContent;
@@ -15,9 +16,6 @@ interface AboutProps {
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950";
-
-const chipClass =
-  "rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300";
 
 const cardClass =
   "rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] backdrop-blur-sm md:p-8";
@@ -193,7 +191,7 @@ function CertificationItem({ item }: { item: Certification }) {
 export function About({ content = aboutContent }: AboutProps) {
   const { name, photo, bio, skills, techStack, achievements, certifications } =
     content;
-  console.log("photo: ", photo);
+
   return (
     <section
       id="about"
@@ -253,22 +251,9 @@ export function About({ content = aboutContent }: AboutProps) {
               Tech stack
             </h3>
           </Reveal>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {techStack.map((category, index) => (
-              <Reveal key={category.name} delay={index * 0.06}>
-                <div className={`${cardClass} h-full`}>
-                  <h4 className="font-semibold text-white">{category.name}</h4>
-                  <ul className="mt-4 flex flex-wrap gap-2">
-                    {category.items.map((tech) => (
-                      <li key={tech} className={chipClass}>
-                        {tech}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          <Reveal delay={0.1}>
+            <TechStack categories={techStack} />
+          </Reveal>
         </div>
 
         {/* Achievements + certifications */}

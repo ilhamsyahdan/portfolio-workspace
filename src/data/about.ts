@@ -67,18 +67,14 @@ export const aboutContent: AboutContent = {
       items: [
         "React",
         "TypeScript",
+        "Next.js",
         "Tailwind CSS",
         "Framer Motion",
-        "Next.js",
       ],
     },
     {
       name: "Backend",
-      items: ["Node.js", "PostgreSQL", "REST APIs"],
-    },
-    {
-      name: "Data",
-      items: ["Python", "pandas", "scikit-learn", "Jupyter"],
+      items: ["Node.js", "REST APIs", "PostgreSQL", "Python"],
     },
     {
       name: "Tools",

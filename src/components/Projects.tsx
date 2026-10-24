@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { getAllProjects } from "../data/projects";
 import { ProjectCard } from "./ProjectCard";
 import { SectionHeader } from "./SectionHeader";
+import { getAllProjects } from "../utils/projects";
 
 const GITHUB_URL = "https://github.com/username";
 

@@ -1,9 +1,5 @@
-import { useRef } from "react";
-import type {
-  CSSProperties,
-  PointerEvent as ReactPointerEvent,
-  ReactNode,
-} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import {
   motion,
   useMotionTemplate,
@@ -19,44 +15,58 @@ import { SectionHeader } from "./SectionHeader";
 /*  Types                                                                     */
 /* -------------------------------------------------------------------------- */
 
-interface ProjectMetric {
-  readonly value: string;
-  readonly label: string;
-}
-
-interface FeaturedProject {
-  readonly title: string;
-  readonly description: string;
-  readonly tags: readonly string[];
-  readonly metric: ProjectMetric;
-  /** Values for the sparkline inside the preview card. */
-  readonly trend: readonly number[];
-  readonly href: string;
+interface DeveloperProfile {
+  readonly role: string;
+  readonly focus: readonly string[];
+  readonly stack: readonly string[];
+  readonly status: string;
 }
 
 interface HeroProps {
   name?: string;
-  featuredProject?: FeaturedProject;
+  profile?: DeveloperProfile;
+}
+
+type TokenKind = "kw" | "id" | "prop" | "str" | "punct";
+
+interface Token {
+  readonly text: string;
+  readonly kind: TokenKind;
+}
+
+interface PositionedToken extends Token {
+  /** Index of this token's first character in the whole snippet. */
+  readonly start: number;
 }
 
 /* -------------------------------------------------------------------------- */
 /*  Defaults – replace with your own content                                  */
 /* -------------------------------------------------------------------------- */
 
-const DEFAULT_PROJECT: FeaturedProject = {
-  title: "Pulse",
-  description:
-    "A real-time analytics dashboard that turns raw event streams into decisions your team can act on.",
-  tags: ["Next.js", "TypeScript", "PostgreSQL"],
-  metric: { value: "12.4k", label: "active users this week" },
-  trend: [18, 26, 22, 34, 30, 44, 40, 58, 52, 70, 66, 84],
-  href: "#projects",
+const DEFAULT_PROFILE: DeveloperProfile = {
+  role: "Software Engineer",
+  focus: ["Frontend", "Backend"],
+  stack: ["React", "TypeScript"],
+  status: "Open to work",
 };
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950";
+
+/** Typing speed: characters revealed per tick, and tick length in ms. */
+const TYPE_START_DELAY = 900;
+const TYPE_CHARS_PER_TICK = 2;
+const TYPE_TICK_MS = 24;
+
+const TOKEN_COLORS: Record<TokenKind, string> = {
+  kw: "text-sky-400",
+  id: "text-cyan-200",
+  prop: "text-slate-200",
+  str: "text-emerald-300",
+  punct: "text-slate-500",
+};
 
 /* -------------------------------------------------------------------------- */
 /*  Motion variants – one orchestrated entrance                               */
@@ -86,46 +96,96 @@ const cardEntrance: Variants = {
 /*  Helpers                                                                   */
 /* -------------------------------------------------------------------------- */
 
-interface SparkPaths {
-  readonly line: string;
-  readonly area: string;
-  readonly end: { readonly x: number; readonly y: number };
+const tok = (text: string, kind: TokenKind): Token => ({ text, kind });
+
+function arrayTokens(items: readonly string[]): Token[] {
+  const out: Token[] = [tok("[", "punct")];
+  items.forEach((item, i) => {
+    if (i > 0) out.push(tok(", ", "punct"));
+    out.push(tok(JSON.stringify(item), "str"));
+  });
+  out.push(tok("]", "punct"));
+  return out;
 }
 
-/** Builds a smooth SVG line + filled area path from a list of values. */
-function buildSparkPaths(
-  values: readonly number[],
-  width: number,
-  height: number,
-  pad: number,
-): SparkPaths {
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
-  const step = values.length > 1 ? (width - pad * 2) / (values.length - 1) : 0;
+/** Turns profile data into syntax-highlighted lines of a TS object literal. */
+function buildCodeLines(
+  name: string,
+  profile: DeveloperProfile,
+): PositionedToken[][] {
+  const raw: Token[][] = [
+    [tok("const ", "kw"), tok("developer", "id"), tok(" = {", "punct")],
+    [
+      tok("  name", "prop"),
+      tok(": ", "punct"),
+      tok(JSON.stringify(name), "str"),
+      tok(",", "punct"),
+    ],
+    [
+      tok("  role", "prop"),
+      tok(": ", "punct"),
+      tok(JSON.stringify(profile.role), "str"),
+      tok(",", "punct"),
+    ],
+    [
+      tok("  focus", "prop"),
+      tok(": ", "punct"),
+      ...arrayTokens(profile.focus),
+      tok(",", "punct"),
+    ],
+    [
+      tok("  stack", "prop"),
+      tok(": ", "punct"),
+      ...arrayTokens(profile.stack),
+      tok(",", "punct"),
+    ],
+    [
+      tok("  status", "prop"),
+      tok(": ", "punct"),
+      tok(JSON.stringify(profile.status), "str"),
+      tok(",", "punct"),
+    ],
+    [tok("};", "punct")],
+  ];
 
-  const points = values.map((v, i) => ({
-    x: pad + i * step,
-    y: height - pad - ((v - min) / range) * (height - pad * 2),
-  }));
+  let cursor = 0;
+  return raw.map((line) =>
+    line.map((token) => {
+      const positioned: PositionedToken = { ...token, start: cursor };
+      cursor += token.text.length;
+      return positioned;
+    }),
+  );
+}
 
-  const first = points[0];
-  const last = points[points.length - 1];
-  if (!first || !last) {
-    return { line: "", area: "", end: { x: 0, y: 0 } };
-  }
+/** Reveals `total` characters over time; jumps straight to the end if disabled. */
+function useTyping(total: number, enabled: boolean): number {
+  const [count, setCount] = useState<number>(enabled ? 0 : total);
 
-  let line = `M ${first.x} ${first.y}`;
-  for (let i = 1; i < points.length; i += 1) {
-    const prev = points[i - 1];
-    const curr = points[i];
-    if (!prev || !curr) continue;
-    const cx = (prev.x + curr.x) / 2;
-    line += ` C ${cx} ${prev.y}, ${cx} ${curr.y}, ${curr.x} ${curr.y}`;
-  }
+  useEffect(() => {
+    if (!enabled) {
+      setCount(total);
+      return;
+    }
 
-  const area = `${line} L ${last.x} ${height} L ${first.x} ${height} Z`;
-  return { line, area, end: { x: last.x, y: last.y } };
+    setCount(0);
+    let interval: number | undefined;
+    const timeout = window.setTimeout(() => {
+      let n = 0;
+      interval = window.setInterval(() => {
+        n = Math.min(n + TYPE_CHARS_PER_TICK, total);
+        setCount(n);
+        if (n >= total) window.clearInterval(interval);
+      }, TYPE_TICK_MS);
+    }, TYPE_START_DELAY);
+
+    return () => {
+      window.clearTimeout(timeout);
+      window.clearInterval(interval);
+    };
+  }, [total, enabled]);
+
+  return count;
 }
 
 const gridStyle: CSSProperties = {
@@ -151,24 +211,6 @@ function Backdrop() {
   );
 }
 
-interface GlassChipProps {
-  children: ReactNode;
-  className?: string;
-  /** translateZ depth in px – gives the chip parallax against the card. */
-  depth: number;
-}
-
-function GlassChip({ children, className = "", depth }: GlassChipProps) {
-  return (
-    <motion.div
-      style={{ z: depth }}
-      className={`absolute flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/70 px-3.5 py-2 text-xs font-medium text-slate-200 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6)] backdrop-blur-md ${className}`}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
 function ArrowIcon() {
   return (
     <svg
@@ -186,17 +228,39 @@ function ArrowIcon() {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Interactive project preview (hover tilt + cursor glare)                   */
-/* -------------------------------------------------------------------------- */
-
-interface ProjectShowcaseProps {
-  project: FeaturedProject;
+/** Zero-width blinking caret, so it never shifts the surrounding text. */
+function Caret() {
+  return (
+    <span aria-hidden className="relative inline-block w-0">
+      <span className="absolute -top-[0.1em] left-0 h-[1.2em] w-[2px] bg-cyan-400 motion-safe:animate-pulse" />
+    </span>
+  );
 }
 
-function ProjectShowcase({ project }: ProjectShowcaseProps) {
+/* -------------------------------------------------------------------------- */
+/*  Code editor card (typing effect + hover tilt + cursor glare)              */
+/* -------------------------------------------------------------------------- */
+
+interface CodeEditorProps {
+  name: string;
+  profile: DeveloperProfile;
+}
+
+function CodeEditor({ name, profile }: CodeEditorProps) {
   const reduceMotion = useReducedMotion();
   const stageRef = useRef<HTMLDivElement>(null);
+
+  const lines = useMemo(() => buildCodeLines(name, profile), [name, profile]);
+  const total = useMemo(
+    () =>
+      lines.reduce(
+        (sum, line) =>
+          sum + line.reduce((lineSum, token) => lineSum + token.text.length, 0),
+        0,
+      ),
+    [lines],
+  );
+  const typed = useTyping(total, !reduceMotion);
 
   // Pointer position normalised to 0..1, smoothed with a spring.
   const pointerX = useMotionValue(0.5);
@@ -225,7 +289,8 @@ function ProjectShowcase({ project }: ProjectShowcaseProps) {
     pointerY.set(0.5);
   };
 
-  const { line, area, end } = buildSparkPaths(project.trend, 320, 120, 8);
+  const lastLine = lines[lines.length - 1];
+  const lastToken = lastLine?.[lastLine.length - 1];
 
   return (
     <div
@@ -259,88 +324,77 @@ function ProjectShowcase({ project }: ProjectShowcaseProps) {
           className="pointer-events-none absolute inset-0 rounded-[1.75rem]"
         />
 
-        {/* Visual */}
-        <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900/80 p-5">
-          <p className="text-3xl font-semibold tracking-tight text-white">
-            {project.metric.value}
-          </p>
-          <p className="mt-1 text-sm text-slate-400">{project.metric.label}</p>
+        {/* Editor window */}
+        <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900/80">
+          {/* Title bar */}
+          <div className="flex items-center gap-2 border-b border-white/5 px-4 py-3">
+            <span
+              aria-hidden
+              className="h-2.5 w-2.5 rounded-full bg-rose-400/80"
+            />
+            <span
+              aria-hidden
+              className="h-2.5 w-2.5 rounded-full bg-amber-400/80"
+            />
+            <span
+              aria-hidden
+              className="h-2.5 w-2.5 rounded-full bg-emerald-400/80"
+            />
+            <span className="ml-3 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 font-mono text-[11px] text-slate-300">
+              developer.ts
+            </span>
+          </div>
 
-          <svg
-            viewBox="0 0 320 120"
-            className="mt-4 h-28 w-full"
+          {/* Code */}
+          <div
             role="img"
-            aria-label={`Trend chart for ${project.metric.label}`}
+            aria-label={`Code snippet describing ${name}, a ${profile.role}`}
+            className="overflow-x-auto px-4 py-5 font-mono text-[11px] leading-6 sm:text-[13px] sm:leading-7"
           >
-            <defs>
-              <linearGradient id="hero-area-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.35" />
-                <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            <motion.path
-              d={area}
-              fill="url(#hero-area-fill)"
-              initial={reduceMotion ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 1, delay: 1.1 }}
-            />
-            <motion.path
-              d={line}
-              fill="none"
-              stroke="#22d3ee"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              initial={reduceMotion ? false : { pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 1.6, delay: 0.7, ease: EASE }}
-            />
-            <circle cx={end.x} cy={end.y} r="9" fill="#22d3ee" opacity="0.18" />
-            <circle cx={end.x} cy={end.y} r="4" fill="#67e8f9" />
-          </svg>
-        </div>
+            {lines.map((line, lineIndex) => (
+              <div key={lineIndex} className="flex">
+                <span
+                  aria-hidden
+                  className="mr-4 w-4 shrink-0 select-none text-right text-slate-600"
+                >
+                  {lineIndex + 1}
+                </span>
+                <code className="whitespace-pre">
+                  {line.map((token) => {
+                    const typedLen = Math.max(
+                      0,
+                      Math.min(token.text.length, typed - token.start),
+                    );
+                    const hasCaret =
+                      (typed >= token.start &&
+                        typed < token.start + token.text.length) ||
+                      (typed >= total && token === lastToken);
 
-        {/* Details */}
-        <div className="px-3 pb-3 pt-5">
-          <h2 className="text-xl font-semibold tracking-tight text-white">
-            {project.title}
-          </h2>
-          <p className="mt-2 text-sm leading-relaxed text-slate-400">
-            {project.description}
-          </p>
-
-          <ul className="mt-4 flex flex-wrap gap-2">
-            {project.tags.map((tag) => (
-              <li
-                key={tag}
-                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300"
-              >
-                {tag}
-              </li>
+                    return (
+                      <span
+                        key={token.start}
+                        className={TOKEN_COLORS[token.kind]}
+                      >
+                        {token.text.slice(0, typedLen)}
+                        {hasCaret && <Caret />}
+                        {/* Untyped text still takes space, so the card never resizes */}
+                        <span className="invisible">
+                          {token.text.slice(typedLen)}
+                        </span>
+                      </span>
+                    );
+                  })}
+                </code>
+              </div>
             ))}
-          </ul>
+          </div>
 
-          <a
-            href={project.href}
-            className={`group mt-5 inline-flex items-center gap-2 rounded-full text-sm font-medium text-cyan-300 transition-colors hover:text-cyan-200 ${focusRing}`}
-          >
-            View case study
-            <ArrowIcon />
-          </a>
+          {/* Status bar */}
+          <div className="flex items-center justify-between border-t border-white/5 px-4 py-2 font-mono text-[11px] text-slate-500">
+            <span>TypeScript</span>
+            <span>Ln {lines.length}, Col 3 · UTF-8</span>
+          </div>
         </div>
-
-        {/* Floating chips (parallax depth) */}
-        <GlassChip depth={70} className="-left-3 top-10 sm:-left-8">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 motion-safe:animate-ping" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-          </span>
-          In production
-        </GlassChip>
-        <GlassChip depth={50} className="-right-3 bottom-28 sm:-right-8">
-          <span className="h-2 w-2 rounded-full bg-cyan-400" />
-          Lighthouse 100
-        </GlassChip>
       </motion.div>
     </div>
   );
@@ -350,10 +404,7 @@ function ProjectShowcase({ project }: ProjectShowcaseProps) {
 /*  Hero                                                                      */
 /* -------------------------------------------------------------------------- */
 
-function Hero({
-  name = "Your Name",
-  featuredProject = DEFAULT_PROJECT,
-}: HeroProps) {
+function Hero({ name = "Your Name", profile = DEFAULT_PROFILE }: HeroProps) {
   const reduceMotion = useReducedMotion();
 
   return (
@@ -389,8 +440,8 @@ function Hero({
             variants={rise}
             className="mt-6 max-w-xl text-lg leading-relaxed text-slate-400"
           >
-            I&apos;m {name}, a full-stack developer. I design and ship fast,
-            accessible interfaces backed by clean, maintainable code.
+            I&apos;m {name}, a {profile.role.toLowerCase()}. I design and ship
+            fast, accessible interfaces backed by clean, maintainable code.
           </motion.p>
 
           <motion.div
@@ -420,12 +471,12 @@ function Hero({
 
         {/* Right column */}
         <motion.div variants={cardEntrance}>
-          <ProjectShowcase project={featuredProject} />
+          <CodeEditor name={name} profile={profile} />
         </motion.div>
       </motion.div>
     </section>
   );
 }
 
-export type { FeaturedProject, HeroProps };
+export type { DeveloperProfile, HeroProps };
 export default Hero;
