@@ -4,6 +4,9 @@
  * Replace every placeholder value with your own.
  */
 import fotoProfile from "../assets/me.webp";
+import usbTeam from "../assets/picture-3.webp";
+import usbThropy from "../assets/picture-2.webp";
+import usbCertificate from "../assets/picture-1.webp";
 
 export interface TechCategory {
   readonly name: string;
@@ -20,6 +23,7 @@ export interface Achievement {
   readonly description: string;
   /** Optional link (announcement, write-up, repo). */
   readonly href?: string;
+  readonly images?: string[];
 }
 
 export interface Certification {
@@ -70,6 +74,7 @@ export const aboutContent: AboutContent = {
         "Next.js",
         "Tailwind CSS",
         "Framer Motion",
+        "GSAP",
       ],
     },
     {
@@ -85,11 +90,11 @@ export const aboutContent: AboutContent = {
     {
       placement: "2nd Place",
       title: "Data Mining Competition",
-      event: "Competition name / organizer",
-      year: "Year",
+      event: "Unlimited Software Building (USB), Gunadarma University",
+      year: "2024",
       description:
-        "Placed second by building a pipeline for feature engineering, model selection and validation. Add a sentence on your approach, the dataset and the result.",
-      href: undefined,
+        "Achieved second place in a data mining competition by contributing to data cleaning, feature engineering, data visualization, and presentation using Python and Random Forest.",
+      images: [usbTeam, usbThropy, usbCertificate],
     },
   ],
   certifications: [

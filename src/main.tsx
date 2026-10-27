@@ -7,11 +7,14 @@ import "@fontsource/jetbrains-mono/500.css";
 import "./index.css";
 import "highlight.js/styles/github-dark.css";
 import App from "./App.tsx";
+import { ToastProvider } from "./components/Toast.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <HelmetProvider>
-      <App />
+      <ToastProvider>
+        <App />
+      </ToastProvider>
     </HelmetProvider>
   </StrictMode>,
 );

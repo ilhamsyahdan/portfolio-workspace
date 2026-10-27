@@ -404,7 +404,10 @@ function CodeEditor({ name, profile }: CodeEditorProps) {
 /*  Hero                                                                      */
 /* -------------------------------------------------------------------------- */
 
-function Hero({ name = "Your Name", profile = DEFAULT_PROFILE }: HeroProps) {
+function Hero({
+  name = "Ilham Syahdan Rochusy",
+  profile = DEFAULT_PROFILE,
+}: HeroProps) {
   const reduceMotion = useReducedMotion();
 
   return (

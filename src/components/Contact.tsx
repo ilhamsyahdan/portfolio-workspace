@@ -4,6 +4,7 @@ import { SectionHeader } from "./SectionHeader";
 import { contactContent } from "../data/contact";
 import type { ContactContent, SocialIcon, SocialLink } from "../data/contact";
 import { Reveal } from "./Reveal";
+import { useToast } from "./Toast";
 
 /* -------------------------------- Types ----------------------------------- */
 
@@ -67,9 +68,23 @@ function validateAll(data: ContactFormData): FieldErrors {
 }
 
 /** MVP submit handler: logs the data and simulates a network delay. */
-async function defaultSubmit(data: ContactFormData): Promise<void> {
-  console.log("Contact form submitted:", data);
-  await new Promise<void>((resolve) => setTimeout(resolve, 800));
+async function sendMessage(data: ContactFormData): Promise<void> {
+  const res = await fetch("https://api.web3forms.com/submit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      access_key: import.meta.env.VITE_WEB3FORMS_KEY,
+      subject: `Portfolio message from ${data.name}`,
+      name: data.name,
+      email: data.email,
+      message: data.message,
+    }),
+  });
+
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.message ?? "Failed to send message");
+  }
 }
 
 /* -------------------------------- Icons ----------------------------------- */
@@ -214,8 +229,9 @@ function Field({ id, label, error, children }: FieldProps) {
 
 export function Contact({
   content = contactContent,
-  onSubmit = defaultSubmit,
+  onSubmit = sendMessage,
 }: ContactProps) {
+  const { toast } = useToast();
   const [values, setValues] = useState<ContactFormData>(EMPTY_FORM);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [touched, setTouched] = useState<TouchedFields>({});
@@ -270,10 +286,20 @@ export function Contact({
       setValues(EMPTY_FORM);
       setErrors({});
       setTouched({});
-      setStatus("success");
+      setStatus("idle");
+      toast({
+        type: "success",
+        title: "Message sent",
+        description: "Thanks for reaching out! I'll get back to you soon.",
+      });
     } catch (err) {
       console.error("Contact form submission failed:", err);
-      setStatus("error");
+      setStatus("idle");
+      toast({
+        type: "error",
+        title: "Couldn't send message",
+        description: "Please try again, or email me directly.",
+      });
     }
   };
 
@@ -385,21 +411,6 @@ export function Contact({
                   )}
                   {isSubmitting ? "Sending..." : "Send message"}
                 </button>
-
-                {/* Feedback (always mounted so screen readers announce changes) */}
-                <div aria-live="polite" className="min-h-[1.5rem] text-sm">
-                  {status === "success" && (
-                    <p className="text-emerald-300">
-                      Thanks! Your message has been sent.
-                    </p>
-                  )}
-                  {status === "error" && (
-                    <p role="alert" className="text-red-300">
-                      Something went wrong. Please try again or email me
-                      directly.
-                    </p>
-                  )}
-                </div>
               </div>
             </form>
           </Reveal>

@@ -4,11 +4,11 @@ import { Reveal } from "./Reveal";
 import { aboutContent } from "../data/about";
 import type {
   AboutContent,
-  Achievement,
   Certification,
   ProfilePhotoData,
 } from "../data/about";
 import { TechStack } from "./TechStack";
+import { AchievementCard } from "./AchievementCard";
 
 interface AboutProps {
   content?: AboutContent;
@@ -119,40 +119,6 @@ function ProfilePhoto({ photo, name }: ProfilePhotoProps) {
         />
       </div>
     </div>
-  );
-}
-
-/* ------------------------ Achievements / certificates ---------------------- */
-
-function AchievementItem({ item }: { item: Achievement }) {
-  return (
-    <li className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="inline-flex items-center rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-300">
-          {item.placement}
-        </span>
-        <span className="text-sm text-slate-500">
-          {item.event} · {item.year}
-        </span>
-      </div>
-      <h4 className="mt-3 text-lg font-semibold tracking-tight text-white">
-        {item.title}
-      </h4>
-      <p className="mt-2 text-sm leading-relaxed text-slate-400">
-        {item.description}
-      </p>
-      {item.href && (
-        <a
-          href={item.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`mt-4 inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-cyan-300 transition-colors hover:text-cyan-200 ${focusRing}`}
-        >
-          Read more
-          <ExternalIcon />
-        </a>
-      )}
-    </li>
   );
 }
 
@@ -274,7 +240,7 @@ export function About({ content = aboutContent }: AboutProps) {
                 </div>
                 <ul className="mt-6 space-y-4">
                   {achievements.map((item) => (
-                    <AchievementItem key={item.title} item={item} />
+                    <AchievementCard key={item.title} item={item} />
                   ))}
                 </ul>
               </div>
