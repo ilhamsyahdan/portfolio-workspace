@@ -1,6 +1,7 @@
 import xora from "../assets/xora.webp";
 import velvet from "../assets/dan-landing-mocktail.webp";
 import sentriPostsImage from "../assets/sentriposts.webp";
+import posSystemImage from "../assets/pos.webp";
 
 import type { Project } from "../types/project";
 
@@ -29,6 +30,36 @@ export const projects: Project[] = [
       date: "2026-08",
       featured: true,
       order: 1,
+    },
+  },
+  {
+    id: "pos-system",
+    title: "POS System — Restaurant Point of Sale",
+    description:
+      "A full-stack point of sale application for restaurants that handles order taking, table management, menu and stock tracking, and payments through Midtrans (Sandbox). It includes a dashboard with live earnings and order statistics, plus invoice and sales report modules.",
+    techStack: [
+      "React",
+      "Vite",
+      "Tailwind CSS",
+      "Redux Toolkit",
+      "TanStack Query",
+      "Node.js",
+      "Express",
+      "MongoDB",
+      "Mongoose",
+      "JWT",
+      "Midtrans",
+      "Cloudinary",
+    ],
+    imagePath: posSystemImage,
+    links: {
+      demo: undefined,
+      source: "https://github.com/ilhamsyahdan/POS-System-UMKM",
+    },
+    metadata: {
+      date: "2026-10",
+      featured: true,
+      order: 2,
     },
   },
   {
