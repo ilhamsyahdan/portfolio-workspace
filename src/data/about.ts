@@ -26,11 +26,19 @@ export interface Achievement {
   readonly images?: string[];
 }
 
+export type CertificationStatus = "issued" | "pending";
+
+export interface CompetencyUnit {
+  readonly title: string;
+}
+
 export interface Certification {
   readonly name: string;
   readonly issuer: string;
   readonly year: string;
+  readonly status?: CertificationStatus; // default "issued"
   readonly credentialUrl?: string;
+  readonly units?: readonly CompetencyUnit[];
 }
 
 export interface ProfilePhotoData {
@@ -53,16 +61,16 @@ export const aboutContent: AboutContent = {
   name: "Ilham Syahdan Rochusy",
   photo: { src: fotoProfile, alt: "Portrait of Your Name" },
   bio: [
-    "I'm a full-stack developer who enjoys turning messy problems into clear, fast and accessible products. I care about the details that make an interface feel effortless: motion, typography, and performance.",
-    "I also work with data. Mining patterns out of raw datasets taught me to question assumptions and validate ideas with evidence, a habit I bring into every product I build.",
+    "I'm a software engineer who builds full-stack web products that are clear, fast and accessible. I care about the details that make an interface feel effortless: motion, typography, and performance.",
+    "I enjoy working across the stack, from designing APIs and database schemas to shaping the interface on top of them, and I keep my code readable and easy to maintain.",
     "Outside of work I write about what I learn, contribute to side projects, and keep experimenting with new tools.",
   ],
   skills: [
+    "Full-stack web development",
     "Frontend architecture",
     "Responsive UI",
     "Accessibility",
     "API design",
-    "Data mining & analysis",
     "Performance optimisation",
   ],
   techStack: [
@@ -99,10 +107,20 @@ export const aboutContent: AboutContent = {
   ],
   certifications: [
     {
-      name: "Certification name",
-      issuer: "Issuing organization",
-      year: "Year",
-      credentialUrl: undefined,
+      name: "Junior Web Programmer",
+      issuer: "BNSP",
+      year: "2026",
+      status: "pending", // ganti ke "issued" + credentialUrl setelah terbit
+      units: [
+        { title: "Using data structures" },
+        { title: "Implementing user interfaces" },
+        { title: "Installing programming tools" },
+        { title: "Writing code to guidelines and best practices" },
+        { title: "Implementing structured programming" },
+        { title: "Using pre-existing libraries and components" },
+        { title: "Documenting program code" },
+        { title: "Debugging" },
+      ],
     },
   ],
 };

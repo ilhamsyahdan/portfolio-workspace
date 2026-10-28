@@ -2,81 +2,17 @@ import { useState } from "react";
 import { SectionHeader } from "./SectionHeader";
 import { Reveal } from "./Reveal";
 import { aboutContent } from "../data/about";
-import type {
-  AboutContent,
-  Certification,
-  ProfilePhotoData,
-} from "../data/about";
+import type { AboutContent, ProfilePhotoData } from "../data/about";
 import { TechStack } from "./TechStack";
 import { AchievementCard } from "./AchievementCard";
+import {
+  CertificationCard,
+  CompactCertificationList,
+} from "./CertificationCard";
+import { MedalIcon, SealIcon } from "./Medal";
 
 interface AboutProps {
   content?: AboutContent;
-}
-
-const focusRing =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950";
-
-const cardClass =
-  "rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] backdrop-blur-sm md:p-8";
-
-/* ------------------------------ Helpers ----------------------------------- */
-
-function TrophyIcon() {
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-      <path d="M4 22h16" />
-      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-    </svg>
-  );
-}
-
-function AwardIcon() {
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="8" r="6" />
-      <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" />
-    </svg>
-  );
-}
-
-function ExternalIcon() {
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 16 16"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M4 12L12 4M6 4h6v6" />
-    </svg>
-  );
 }
 
 /* ---------------------------- Profile photo ------------------------------- */
@@ -122,41 +58,18 @@ function ProfilePhoto({ photo, name }: ProfilePhotoProps) {
   );
 }
 
-function CertificationItem({ item }: { item: Certification }) {
-  return (
-    <li className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-      <span
-        aria-hidden
-        className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-300"
-      >
-        <AwardIcon />
-      </span>
-      <div className="min-w-0 flex-1">
-        <h4 className="font-semibold text-white">{item.name}</h4>
-        <p className="mt-0.5 text-sm text-slate-400">
-          {item.issuer} · {item.year}
-        </p>
-      </div>
-      {item.credentialUrl && (
-        <a
-          href={item.credentialUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`View credential for ${item.name}`}
-          className={`mt-1 shrink-0 rounded-md text-slate-500 transition-colors hover:text-cyan-300 ${focusRing}`}
-        >
-          <ExternalIcon />
-        </a>
-      )}
-    </li>
-  );
-}
-
 /* --------------------------------- About ---------------------------------- */
 
 export function About({ content = aboutContent }: AboutProps) {
   const { name, photo, bio, skills, techStack, achievements, certifications } =
     content;
+
+  // Sertifikasi utama (punya unit kompetensi / belum terbit) tampil sebagai kartu;
+  // sisanya diringkas dalam satu daftar agar kolom tidak memanjang.
+  const featuredCerts = certifications.filter(
+    (c) => (c.units?.length ?? 0) > 0 || c.status === "pending",
+  );
+  const otherCerts = certifications.filter((c) => !featuredCerts.includes(c));
 
   return (
     <section
@@ -222,19 +135,14 @@ export function About({ content = aboutContent }: AboutProps) {
           </Reveal>
         </div>
 
-        {/* Achievements + certifications */}
-        <div className="mt-20 grid gap-6 lg:grid-cols-2">
+        {/* Achievements + certifications: no wrapper cards, so no card-in-card */}
+        <div className="mt-20 grid items-start gap-14 lg:grid-cols-2 lg:gap-10">
           {achievements.length > 0 && (
             <Reveal>
-              <div className={`${cardClass} h-full`}>
+              <div>
                 <div className="flex items-center gap-3">
-                  <span
-                    aria-hidden
-                    className="grid h-10 w-10 place-items-center rounded-xl border border-amber-400/20 bg-amber-400/10 text-amber-300"
-                  >
-                    <TrophyIcon />
-                  </span>
-                  <h3 className="text-xl font-semibold tracking-tight text-white">
+                  <MedalIcon />
+                  <h3 className="text-2xl font-semibold tracking-tight text-white">
                     Achievements
                   </h3>
                 </div>
@@ -249,22 +157,20 @@ export function About({ content = aboutContent }: AboutProps) {
 
           {certifications.length > 0 && (
             <Reveal delay={0.1}>
-              <div className={`${cardClass} h-full`}>
+              <div>
                 <div className="flex items-center gap-3">
-                  <span
-                    aria-hidden
-                    className="grid h-10 w-10 place-items-center rounded-xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-300"
-                  >
-                    <AwardIcon />
-                  </span>
-                  <h3 className="text-xl font-semibold tracking-tight text-white">
+                  <SealIcon />
+                  <h3 className="text-2xl font-semibold tracking-tight text-white">
                     Certifications
                   </h3>
                 </div>
-                <ul className="mt-6 space-y-3">
-                  {certifications.map((item) => (
-                    <CertificationItem key={item.name} item={item} />
+                <ul className="mt-6 space-y-4">
+                  {featuredCerts.map((item) => (
+                    <CertificationCard key={item.name} item={item} />
                   ))}
+                  {otherCerts.length > 0 && (
+                    <CompactCertificationList items={otherCerts} />
+                  )}
                 </ul>
               </div>
             </Reveal>
