@@ -10,6 +10,7 @@ import {
 } from "framer-motion";
 import type { Variants } from "framer-motion";
 import { SectionHeader } from "./SectionHeader";
+import { scrollToSection } from "../utils/scroll";
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -453,6 +454,10 @@ function Hero({
           >
             <motion.a
               href="#projects"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection("projects");
+              }}
               whileHover={reduceMotion ? undefined : { y: -2 }}
               whileTap={reduceMotion ? undefined : { scale: 0.98 }}
               className={`group inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-7 py-3.5 text-base font-semibold text-slate-950 shadow-[0_0_36px_-6px_rgba(6,182,212,0.7)] transition-colors hover:bg-cyan-400 ${focusRing}`}
@@ -463,6 +468,10 @@ function Hero({
 
             <motion.a
               href="#contact"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection("contact");
+              }}
               whileHover={reduceMotion ? undefined : { y: -2 }}
               whileTap={reduceMotion ? undefined : { scale: 0.98 }}
               className={`inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-7 py-3.5 text-base font-medium text-slate-100 backdrop-blur-md transition-colors hover:border-white/20 hover:bg-white/10 ${focusRing}`}
