@@ -29,6 +29,8 @@ export interface Project {
 
   /** Optional metadata */
   metadata?: ProjectMetadata;
+  
+  screenshots?: readonly string[]
 }
 
 /**

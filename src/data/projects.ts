@@ -1,7 +1,10 @@
 import xora from "../assets/xora.webp";
 import velvet from "../assets/dan-landing-mocktail.webp";
 import sentriPostsImage from "../assets/sentriposts.webp";
-import posSystemImage from "../assets/pos.webp";
+import posHomeImage from "../assets/projects/pos/home-pos.webp";
+import posOrdersImage from "../assets/projects/pos/orders-pos.webp";
+import posOverviewImage from "../assets/projects/pos/overview-pos.webp";
+import posSystemImage from "../assets/projects/pos/pos.webp";
 
 import type { Project } from "../types/project";
 
@@ -56,6 +59,7 @@ export const projects: Project[] = [
       demo: undefined,
       source: "https://github.com/ilhamsyahdan/POS-System-UMKM",
     },
+    screenshots: [posHomeImage, posOrdersImage, posOverviewImage],
     metadata: {
       date: "2026-10",
       featured: true,
@@ -64,8 +68,9 @@ export const projects: Project[] = [
   },
   {
     id: "xora-landing",
-    title: "Xora Landing Page",
-    description: "…",
+    title: "XORA AI — Video Editor Landing Page",
+    description:
+      "An animated landing page for a cocktail bar concept, built to practice scroll-driven animation with GSAP. It features animated hero and menu sections, smooth transitions, and a fully responsive layout. Design inspired by JavaScript Mastery.",
     techStack: ["React", "TypeScript", "Vite", "Tailwind CSS"],
     imagePath: xora, // hasil import, di-hash saat build
     links: {
@@ -76,13 +81,14 @@ export const projects: Project[] = [
       date: "2026-08",
       featured: true,
       status: "completed",
-      order: 1,
+      order: 3,
     },
   },
   {
     id: "cocktail-landing",
     title: "Cocktail Landing Page",
-    description: "…",
+    description:
+      "A responsive marketing page for XORA AI, an AI video editor concept, built to practice turning a polished design into clean, reusable React components with Tailwind CSS. Design inspired by JavaScript Mastery.",
     techStack: ["React", "TypeScript", "Vite", "Tailwind CSS", "GSAP"],
     imagePath: velvet, // hasil import, di-hash saat build
     links: {
@@ -93,7 +99,7 @@ export const projects: Project[] = [
       date: "2026-08",
       featured: true,
       status: "completed",
-      order: 1,
+      order: 4,
     },
   },
 ];

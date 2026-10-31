@@ -1,6 +1,7 @@
-import { forwardRef, useState } from "react";
+import { forwardRef, useCallback, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { Project } from "../types/project";
+import { ImageLightbox } from "./Lightbox";
 
 interface ProjectCardProps {
   project: Project;
@@ -64,6 +65,25 @@ function DocIcon() {
   );
 }
 
+function ImagesIcon() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <circle cx="9" cy="9" r="2" />
+      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+    </svg>
+  );
+}
+
 /* ------------------------------- Card ------------------------------------- */
 
 /**
@@ -74,9 +94,21 @@ export const ProjectCard = forwardRef<HTMLElement, ProjectCardProps>(
   function ProjectCard({ project, selectedTech, onTechClick }, ref) {
     const reduceMotion = useReducedMotion();
     const [imageFailed, setImageFailed] = useState<boolean>(false);
+    const [openIndex, setOpenIndex] = useState<number | null>(null);
+    const galleryButtonRef = useRef<HTMLButtonElement>(null);
 
     const isFeatured = Boolean(project.metadata?.featured);
     const isInProgress = project.metadata?.status === "in-progress";
+
+    // Gallery = cover first, then the extra screenshots. Empty when none exist.
+    const screenshots = project.screenshots ?? [];
+    const gallery =
+      screenshots.length > 0 ? [project.imagePath, ...screenshots] : [];
+
+    const closeGallery = useCallback(() => {
+      setOpenIndex(null);
+      galleryButtonRef.current?.focus(); // return focus to what opened it
+    }, []);
 
     return (
       <motion.article
@@ -112,14 +144,26 @@ export const ProjectCard = forwardRef<HTMLElement, ProjectCardProps>(
             className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent"
           />
 
+          {/* Clicking the cover also opens the gallery; the visible control is the
+              "Screenshots" link below, so this stays out of the tab order. */}
+          {gallery.length > 0 && (
+            <button
+              type="button"
+              tabIndex={-1}
+              aria-hidden
+              onClick={() => setOpenIndex(0)}
+              className="absolute inset-0 z-10 cursor-zoom-in"
+            />
+          )}
+
           {isInProgress && (
-            <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-slate-950/60 px-3 py-1 text-xs font-medium text-amber-300 backdrop-blur-md">
+            <span className="pointer-events-none absolute left-4 top-4 z-20 inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-slate-950/60 px-3 py-1 text-xs font-medium text-amber-300 backdrop-blur-md">
               <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
               In progress
             </span>
           )}
           {isFeatured && (
-            <span className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-slate-950/60 px-3 py-1 text-xs font-medium text-cyan-300 backdrop-blur-md">
+            <span className="pointer-events-none absolute right-4 top-4 z-20 inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-slate-950/60 px-3 py-1 text-xs font-medium text-cyan-300 backdrop-blur-md">
               <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
               Featured
             </span>
@@ -184,6 +228,20 @@ export const ProjectCard = forwardRef<HTMLElement, ProjectCardProps>(
                 Source
               </a>
             )}
+            {gallery.length > 0 && (
+              <button
+                ref={galleryButtonRef}
+                type="button"
+                onClick={() => setOpenIndex(0)}
+                aria-label={`View ${screenshots.length} screenshot${
+                  screenshots.length === 1 ? "" : "s"
+                } of ${project.title}`}
+                className={`inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-slate-400 transition-colors hover:text-white ${focusRing}`}
+              >
+                <ImagesIcon />
+                Screenshots
+              </button>
+            )}
             {project.links.caseStudy && (
               <a
                 href={project.links.caseStudy}
@@ -198,6 +256,16 @@ export const ProjectCard = forwardRef<HTMLElement, ProjectCardProps>(
             )}
           </div>
         </div>
+
+        {/* Portals to <body>, so the card's overflow/transform cannot clip it */}
+        <ImageLightbox
+          images={gallery}
+          title={project.title}
+          openIndex={openIndex}
+          onIndexChange={setOpenIndex}
+          onClose={closeGallery}
+          imageLabel="screenshot"
+        />
       </motion.article>
     );
   },
